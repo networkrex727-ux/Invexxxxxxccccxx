@@ -194,7 +194,7 @@ fun HomeScreen(
                                     .clip(CircleShape)
                                     .background(PureWhite),
                                 contentScale = ContentScale.Crop,
-                                error = painterResource(id = R.drawable.img_app_icon)
+                                error = painterResource(id = R.drawable.app_icon)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             // User Info
@@ -1067,7 +1067,7 @@ fun BlogScreen(
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(LightGrayBorder),
                                     contentScale = ContentScale.Crop,
-                                    error = painterResource(id = R.drawable.img_app_icon) // local gold placeholder fallback
+                                    error = painterResource(id = R.drawable.app_icon) // local gold placeholder fallback
                                 )
 
                                 Spacer(modifier = Modifier.width(12.dp))
@@ -1192,7 +1192,7 @@ fun MineScreen(
                                     .clip(CircleShape)
                                     .background(PureWhite),
                                 contentScale = ContentScale.Crop,
-                                error = painterResource(id = R.drawable.img_app_icon)
+                                error = painterResource(id = R.drawable.app_icon)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             // Info

@@ -1411,7 +1411,7 @@ fun BlogDetailScreen(
                             .height(200.dp)
                             .background(LightGrayBorder),
                         contentScale = ContentScale.Crop,
-                        error = painterResource(id = R.drawable.img_app_icon)
+                        error = painterResource(id = R.drawable.app_icon)
                     )
                 }
 
@@ -1995,6 +1995,7 @@ fun SupportScreen(navController: NavController) {
     val context = LocalContext.current
     var telegramUrl by remember { mutableStateOf("https://t.me/invexx_official") }
     var whatsappUrl by remember { mutableStateOf("https://wa.me/919999999999") }
+    var supportEmail by remember { mutableStateOf("support@invexx-wealth.com") }
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
 
     LaunchedEffect(Unit) {
@@ -2004,6 +2005,7 @@ fun SupportScreen(navController: NavController) {
             if (settings.status == "success" && settings.data != null) {
                 telegramUrl = settings.data["telegram_url"]?.toString() ?: "https://t.me/invexx_official"
                 whatsappUrl = settings.data["whatsapp_url"]?.toString() ?: "https://wa.me/919999999999"
+                supportEmail = settings.data["support_email"]?.toString() ?: "support@invexx-wealth.com"
             }
         } catch (e: Exception) {
             // Keep default fallbacks
@@ -2127,7 +2129,7 @@ fun SupportScreen(navController: NavController) {
                                 .fillMaxWidth()
                                 .clickable {
                                     try {
-                                        uriHandler.openUri("mailto:support@invexx-wealth.com")
+                                        uriHandler.openUri("mailto:$supportEmail")
                                     } catch (e: Exception) {}
                                 },
                             verticalAlignment = Alignment.CenterVertically,
@@ -2146,7 +2148,7 @@ fun SupportScreen(navController: NavController) {
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text("Official Support Email", style = Typography.bodyLarge.copy(fontWeight = FontWeight.Bold))
-                                    Text("support@invexx-wealth.com", style = Typography.bodyMedium.copy(color = MediumGray))
+                                    Text(supportEmail, style = Typography.bodyMedium.copy(color = MediumGray))
                                 }
                             }
                             Icon(imageVector = Icons.Default.ChevronRight, contentDescription = "Go", tint = MediumGray)

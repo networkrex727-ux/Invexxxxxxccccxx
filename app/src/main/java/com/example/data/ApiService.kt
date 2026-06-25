@@ -586,7 +586,14 @@ class MockApiService(private val context: Context) : ApiService {
 
     override suspend fun getSystemSettings(): ApiResponse<Map<String, Any>> {
         delay(300)
-        return ApiResponse("success", "Settings loaded", mapOf("minVersion" to "1.0.0", "latestVersion" to "1.0.0", "updateUrl" to "https://invexx.app"))
+        return ApiResponse("success", "Settings loaded", mapOf(
+            "minVersion" to "1.0.0", 
+            "latestVersion" to "1.0.0", 
+            "updateUrl" to "https://invexx.app",
+            "telegram_url" to "https://t.me/invexx_official",
+            "whatsapp_url" to "https://wa.me/919999999999",
+            "support_email" to "support@invexx-wealth.com"
+        ))
     }
 
     override suspend fun updateSystemSettings(settings: Map<String, Any>): ApiResponse<String> {

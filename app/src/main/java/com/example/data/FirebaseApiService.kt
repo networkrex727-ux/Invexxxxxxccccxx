@@ -186,6 +186,7 @@ class FirebaseApiService(private val context: Context) : ApiService {
                     "upsetMessage" to "We are undergoing scheduled maintenance. The app will be fully functional shortly. We apologize for the inconvenience.",
                     "telegram_url" to "https://t.me/invexx_official",
                     "whatsapp_url" to "https://wa.me/919999999999",
+                    "support_email" to "support@invexx-wealth.com",
                     "upi_id" to "invexx@ybl",
                     "signup_bonus" to 46.0
                 )
@@ -329,20 +330,6 @@ class FirebaseApiService(private val context: Context) : ApiService {
                     list.add(plan)
                 }
             }
-        } else {
-            // Populate default mock plans if the DB is blank
-            val defaultPlans = listOf(
-                PlanModel(1, "Copper", 159.00f, 19, 24.00f, 456.00f, "fixed_fund"),
-                PlanModel(2, "GOLD", 200.00f, 10, 25.00f, 250.00f, "fixed_fund"),
-                PlanModel(3, "Silver", 200.00f, 35, 29.00f, 1015.00f, "fixed_fund"),
-                PlanModel(4, "Platinum", 500.00f, 40, 75.00f, 3000.00f, "fixed_fund"),
-                PlanModel(5, "Welfare Tier 1", 100.00f, 5, 25.00f, 125.00f, "welfare_fund"),
-                PlanModel(6, "Welfare Tier 2", 300.00f, 7, 85.00f, 595.00f, "welfare_fund"),
-                PlanModel(7, "Yearly Premium", 1200.00f, 365, 10.00f, 3650.00f, "yearly_fund"),
-                PlanModel(8, "Yearly Ultra", 2500.00f, 365, 25.00f, 9125.00f, "yearly_fund")
-            )
-            dbRef.setValue(defaultPlans).await()
-            list.addAll(defaultPlans.filter { it.type == type })
         }
         return ApiResponse("success", "Plans loaded", list)
     }
@@ -539,51 +526,6 @@ class FirebaseApiService(private val context: Context) : ApiService {
                 )
                 list.add(blog)
             }
-        } else {
-            val defaultBlogs = listOf(
-                BlogModel(
-                    id = 1,
-                    title = "Invexx Platform Official Launch",
-                    excerpt = "We are excited to announce the official launch of Invexx platform. A new journey of investment, growth and earnings begins now.",
-                    content = "We are absolutely thrilled to officially launch the INVEXX Investment Platform. Built on a foundation of security, transparency, and sustainable growth, INVEXX offers a premium suite of digital funds tailored for investors worldwide. With Fixed Funds, Welfare options, and robust Yearly Growth structures, INVEXX bridges the gap between everyday wealth and professional-grade yield generation. Thank you for joining us on Day 1—this is where your financial freedom matures. Invest, Earn, and Grow with INVEXX!",
-                    imageUrl = "https://picsum.photos/seed/invexx1/400/300",
-                    date = "April 24, 2025"
-                ),
-                BlogModel(
-                    id = 2,
-                    title = "Higher Returns with Fixed Funds",
-                    excerpt = "Our Fixed Fund plans are designed to give you stable daily earnings and long term financial growth.",
-                    content = "For investors seeking stability and lock-in guarantees, the Fixed Funds remain our flagship product. Our plans like Copper, Silver, and Gold provide immediate, structured, daily payouts with clear contract periods ranging from 10 to 35 days. By locking in strategic high-frequency transactions, we secure yield margins that are returned directly to your digital wallets every 24 hours. Learn how you can maximize compounding with minimal risk today.",
-                    imageUrl = "https://picsum.photos/seed/invexx2/400/300",
-                    date = "April 20, 2025"
-                ),
-                BlogModel(
-                    id = 3,
-                    title = "Security is Our Top Priority",
-                    excerpt = "At Invexx, the security of your data and transactions is our top priority. We use advanced encryption and secure systems.",
-                    content = "At INVEXX, we prioritize safety above all else. Your financial data is protected by industry-standard 256-bit SSL encryption and our secure backend ledger network. Additionally, our SharedPreferences local storage keeps your credentials locked safely on-device. With features like immediate withdrawal auditing, automated security checkups, and 100% verified KYC guidelines, we make sure that your funds are accessible only to you, at all times.",
-                    imageUrl = "https://picsum.photos/seed/invexx3/400/300",
-                    date = "April 15, 2025"
-                ),
-                BlogModel(
-                    id = 4,
-                    title = "Invite Friends & Earn More",
-                    excerpt = "Share your referral link, invite your friends and earn exciting commission on their investments.",
-                    content = "Unlock exponential income with the INVEXX multi-tier affiliate program. By sharing your custom referral link, you can invite friends and earn immediate rewards. From Level 1 commissions starting at 50% down to team volume incentives, we reward team leaders with rank advancements up to VIP10. Empower your network to invest, and grow a sustainable, recurring team salary directly from team volume.",
-                    imageUrl = "https://picsum.photos/seed/invexx4/400/300",
-                    date = "April 10, 2025"
-                ),
-                BlogModel(
-                    id = 5,
-                    title = "New Investment Plans Coming Soon",
-                    excerpt = "We are working on new and better investment plans to help you earn more and grow faster.",
-                    content = "We are constantly evaluating and designing new fund portfolios to offer diverse risk-reward profiles. In the coming quarter, we are planning to introduce eco-friendly energy portfolios and micro-infrastructure funding. These additions will be hosted under our Welfare and Yearly sections to offer even higher annual yields and special VIP bonuses. Stay tuned to our blogs for early-bird reservation opportunities!",
-                    imageUrl = "https://picsum.photos/seed/invexx5/400/300",
-                    date = "April 05, 2025"
-                )
-            )
-            dbRef.setValue(defaultBlogs).await()
-            list.addAll(defaultBlogs)
         }
         return ApiResponse("success", "Blogs loaded", list)
     }
@@ -1111,23 +1053,6 @@ class FirebaseApiService(private val context: Context) : ApiService {
                 )
                 list.add(benefit)
             }
-        } else {
-            // Seed default VIP benefits
-            val defaults = listOf(
-                VipBenefitModel("VIP0", "Standard User on Registration", "Direct Commission: 50%"),
-                VipBenefitModel("VIP1", "Team Active Members: 1+", "Direct Commission: 51% | Bonus: +₹20"),
-                VipBenefitModel("VIP2", "Team Active Members: 3+", "Direct Commission: 52% | Bonus: +₹50"),
-                VipBenefitModel("VIP3", "Team Active Members: 5+", "Direct Commission: 53% | Bonus: +₹100"),
-                VipBenefitModel("VIP4", "Team Active Members: 10+", "Direct Commission: 54% | Bonus: +₹200"),
-                VipBenefitModel("VIP5", "Team Active Members: 20+", "Direct Commission: 55% | Bonus: +₹500"),
-                VipBenefitModel("VIP6", "Team Active Members: 50+", "Direct Commission: 56% | Bonus: +₹1000"),
-                VipBenefitModel("VIP7", "Team Active Members: 100+", "Direct Commission: 57% | Bonus: +₹2000"),
-                VipBenefitModel("VIP8", "Team Active Members: 200+", "Direct Commission: 58% | Bonus: +₹5000"),
-                VipBenefitModel("VIP9", "Team Active Members: 500+", "Direct Commission: 59% | Bonus: +₹10000"),
-                VipBenefitModel("VIP10", "Team Active Members: 1000+", "Direct Commission: 60% | Bonus: +₹25000")
-            )
-            dbRef.setValue(defaults).await()
-            list.addAll(defaults)
         }
         return ApiResponse("success", "VIP benefits loaded", list)
     }
@@ -1165,16 +1090,6 @@ class FirebaseApiService(private val context: Context) : ApiService {
         }
         
         val list = mutableListOf<TaskModel>()
-        if (globalTasks.isEmpty()) {
-            // Seed global tasks table
-            val defaultTasks = listOf(
-                TaskModel(1, "Daily Check-in", "Check-in every day to earn rewards", 0.0f, false, false, 50.0f),
-                TaskModel(2, "Invite 5 Friends", "Invite 5 friends to register and invest", 0.0f, false, false, 250.0f),
-                TaskModel(3, "First Investment", "Make your first investment in any plan", 0.0f, false, false, 100.0f)
-            )
-            globalDbRef.setValue(defaultTasks).await()
-            globalTasks.addAll(defaultTasks)
-        }
         
         for (gTask in globalTasks) {
             val uTask = userTasksMap[gTask.id]
@@ -2036,6 +1951,7 @@ class FirebaseApiService(private val context: Context) : ApiService {
                 "upsetMessage" to "We are undergoing scheduled maintenance. The app will be fully functional shortly. We apologize for the inconvenience.",
                 "telegram_url" to "https://t.me/invexx_official",
                 "whatsapp_url" to "https://wa.me/919999999999",
+                "support_email" to "support@invexx-wealth.com",
                 "upi_id" to "invexx@ybl",
                 "signup_bonus" to 46.0,
                 "register_commission" to 50.0,
