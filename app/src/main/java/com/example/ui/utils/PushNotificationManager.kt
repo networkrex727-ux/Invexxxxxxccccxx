@@ -26,7 +26,7 @@ object PushNotificationManager {
     fun showNotification(context: Context, title: String, text: String, id: Int = (100..9999).random()) {
         createChannel(context)
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(com.example.R.drawable.app_icon)
+            .setSmallIcon(com.example.R.drawable.ic_notification)
             .setLargeIcon(android.graphics.BitmapFactory.decodeResource(context.resources, com.example.R.drawable.app_icon))
             .setContentTitle(title)
             .setContentText(text)

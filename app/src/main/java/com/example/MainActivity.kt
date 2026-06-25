@@ -448,7 +448,7 @@ class MainActivity : FragmentActivity() {
 
     private fun sendWelcomeNotification() {
         val builder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(com.example.R.drawable.app_icon)
+            .setSmallIcon(com.example.R.drawable.ic_notification)
             .setLargeIcon(android.graphics.BitmapFactory.decodeResource(resources, com.example.R.drawable.app_icon))
             .setContentTitle("Welcome to INVEXX! ✨")
             .setContentText("Your smart gateway to premium wealth growth and secure fixed funds. Start earning today!")
