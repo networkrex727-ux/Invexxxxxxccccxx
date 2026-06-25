@@ -60,6 +60,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
 
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
@@ -71,6 +72,8 @@ class MainActivity : FragmentActivity() {
     private val channelId = "invexx_welcome_notifications"
     private var notificationsListener: ChildEventListener? = null
     private var announcementsListener: ChildEventListener? = null
+    private var plansListener: ChildEventListener? = null
+    private var blogsListener: ChildEventListener? = null
     private val prefChangeListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == "phone_number" || key == "phone" || key == "key_phone" || key == "user_phone") {
             startFirebaseNotificationListeners()
@@ -291,6 +294,72 @@ class MainActivity : FragmentActivity() {
         }
         announcementsRef.addChildEventListener(annListener)
         announcementsListener = annListener
+
+        // 3. Listen for new plans
+        val plansRef = FirebaseDatabase.getInstance(databaseUrl).getReference("plans")
+        val initialPlanKeys = mutableSetOf<String>()
+        var isPlansInitialLoadDone = false
+        plansRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                snapshot.children.forEach { initialPlanKeys.add(it.key ?: "") }
+                isPlansInitialLoadDone = true
+                
+                val pListener = object : ChildEventListener {
+                    override fun onChildAdded(child: DataSnapshot, previousChildName: String?) {
+                        val key = child.key ?: return
+                        if (isPlansInitialLoadDone && !initialPlanKeys.contains(key)) {
+                            val planName = child.child("name").getValue(String::class.java) ?: "New Plan"
+                            com.example.ui.utils.PushNotificationManager.showNotification(
+                                this@MainActivity, 
+                                "New Investment Plan! \uD83D\uDE80", 
+                                "Check out our new plan: $planName. Invest now and earn high returns!"
+                            )
+                            initialPlanKeys.add(key)
+                        }
+                    }
+                    override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+                    override fun onChildRemoved(snapshot: DataSnapshot) {}
+                    override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+                    override fun onCancelled(error: DatabaseError) {}
+                }
+                plansRef.addChildEventListener(pListener)
+                plansListener = pListener
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
+
+        // 4. Listen for new blogs
+        val blogsRef = FirebaseDatabase.getInstance(databaseUrl).getReference("blogs")
+        val initialBlogKeys = mutableSetOf<String>()
+        var isBlogsInitialLoadDone = false
+        blogsRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                snapshot.children.forEach { initialBlogKeys.add(it.key ?: "") }
+                isBlogsInitialLoadDone = true
+                
+                val bListener = object : ChildEventListener {
+                    override fun onChildAdded(child: DataSnapshot, previousChildName: String?) {
+                        val key = child.key ?: return
+                        if (isBlogsInitialLoadDone && !initialBlogKeys.contains(key)) {
+                            val blogTitle = child.child("title").getValue(String::class.java) ?: "New Article"
+                            com.example.ui.utils.PushNotificationManager.showNotification(
+                                this@MainActivity, 
+                                "New Blog Post \uD83D\uDCDC", 
+                                "Just published: $blogTitle. Read it now!"
+                            )
+                            initialBlogKeys.add(key)
+                        }
+                    }
+                    override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+                    override fun onChildRemoved(snapshot: DataSnapshot) {}
+                    override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+                    override fun onCancelled(error: DatabaseError) {}
+                }
+                blogsRef.addChildEventListener(bListener)
+                blogsListener = bListener
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
     }
 
     private fun stopFirebaseNotificationListeners() {
@@ -318,6 +387,25 @@ class MainActivity : FragmentActivity() {
                     .removeEventListener(it)
             }
         } catch (e: Exception) {}
+        announcementsListener = null
+
+        try {
+            plansListener?.let {
+                FirebaseDatabase.getInstance(databaseUrl)
+                    .getReference("plans")
+                    .removeEventListener(it)
+            }
+        } catch (e: Exception) {}
+        plansListener = null
+
+        try {
+            blogsListener?.let {
+                FirebaseDatabase.getInstance(databaseUrl)
+                    .getReference("blogs")
+                    .removeEventListener(it)
+            }
+        } catch (e: Exception) {}
+        blogsListener = null
         announcementsListener = null
     }
 
@@ -360,7 +448,8 @@ class MainActivity : FragmentActivity() {
 
     private fun sendWelcomeNotification() {
         val builder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(com.example.R.drawable.app_icon)
+            .setLargeIcon(android.graphics.BitmapFactory.decodeResource(resources, com.example.R.drawable.app_icon))
             .setContentTitle("Welcome to INVEXX! ✨")
             .setContentText("Your smart gateway to premium wealth growth and secure fixed funds. Start earning today!")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)

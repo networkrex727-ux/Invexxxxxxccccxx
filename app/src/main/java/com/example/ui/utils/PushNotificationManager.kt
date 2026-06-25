@@ -26,7 +26,8 @@ object PushNotificationManager {
     fun showNotification(context: Context, title: String, text: String, id: Int = (100..9999).random()) {
         createChannel(context)
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(com.example.R.drawable.app_icon)
+            .setLargeIcon(android.graphics.BitmapFactory.decodeResource(context.resources, com.example.R.drawable.app_icon))
             .setContentTitle(title)
             .setContentText(text)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
