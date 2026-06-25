@@ -8,6 +8,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 
 /**
  * Common Sealed UI State to handle asynchronous flows cleanly.
@@ -25,12 +32,16 @@ sealed interface UiState<out T> {
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val api = ServiceLocator.getApiService(application)
     private val prefs = ServiceLocator.getPrefs(application)
+    private val okHttpClient = OkHttpClient()
 
     private val _loginState = MutableStateFlow<UiState<UserModel>>(UiState.Idle)
     val loginState: StateFlow<UiState<UserModel>> = _loginState.asStateFlow()
 
     private val _registerState = MutableStateFlow<UiState<String>>(UiState.Idle)
     val registerState: StateFlow<UiState<String>> = _registerState.asStateFlow()
+    
+    private val _forgotPassState = MutableStateFlow<UiState<String>>(UiState.Idle)
+    val forgotPassState: StateFlow<UiState<String>> = _forgotPassState.asStateFlow()
 
     fun login(phone: String, pass: String) {
         viewModelScope.launch {
@@ -72,10 +83,93 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+    
+    fun sendOtp(phone: String) {
+        viewModelScope.launch {
+            _forgotPassState.value = UiState.Loading
+            try {
+                // Check if user exists
+                val checkRes = api.checkUserExists(phone)
+                if (checkRes.data != true) {
+                    _forgotPassState.value = UiState.Error("User with this phone number does not exist.")
+                    return@launch
+                }
+
+                val json = JSONObject().apply { put("phoneNumber", phone) }
+                val body = json.toString().toRequestBody("application/json".toMediaTypeOrNull())
+                val request = Request.Builder()
+                    .url("https://potvggygstvctvngobxl.supabase.co/functions/v1/otpsend")
+                    .post(body)
+                    .addHeader("x-api-key", "pk_live_5a87c99a055d45929adeec7c9dfcf37ca311e219c165ab83")
+                    .build()
+                
+                val response = withContext(Dispatchers.IO) { okHttpClient.newCall(request).execute() }
+                val respStr = withContext(Dispatchers.IO) { response.body?.string() }
+                if (response.isSuccessful && respStr != null) {
+                    val jsonResp = JSONObject(respStr)
+                    val status = jsonResp.optInt("status")
+                    if (status == 200) {
+                        val data = jsonResp.getJSONObject("data")
+                        val verificationToken = data.getString("verificationToken")
+                        val deviceId = data.getString("deviceId")
+                        _forgotPassState.value = UiState.Success("OTP_SENT|$verificationToken|$deviceId")
+                    } else {
+                        _forgotPassState.value = UiState.Error(jsonResp.optString("message", "Failed to send OTP"))
+                    }
+                } else {
+                    _forgotPassState.value = UiState.Error("Failed to send OTP")
+                }
+            } catch (e: Exception) {
+                _forgotPassState.value = UiState.Error(e.message ?: "Network error")
+            }
+        }
+    }
+    
+    fun verifyOtpAndResetPass(phone: String, otp: String, deviceId: String, verificationToken: String, newPass: String) {
+        viewModelScope.launch {
+            _forgotPassState.value = UiState.Loading
+            try {
+                val json = JSONObject().apply {
+                    put("deviceId", deviceId)
+                    put("verificationToken", verificationToken)
+                    put("otpCode", otp)
+                }
+                val body = json.toString().toRequestBody("application/json".toMediaTypeOrNull())
+                val request = Request.Builder()
+                    .url("https://potvggygstvctvngobxl.supabase.co/functions/v1/verifyotp")
+                    .post(body)
+                    .addHeader("x-api-key", "pk_live_5a87c99a055d45929adeec7c9dfcf37ca311e219c165ab83")
+                    .build()
+                
+                val response = withContext(Dispatchers.IO) { okHttpClient.newCall(request).execute() }
+                val respStr = withContext(Dispatchers.IO) { response.body?.string() }
+                if (response.isSuccessful && respStr != null) {
+                    val jsonResp = JSONObject(respStr)
+                    val status = jsonResp.optInt("status")
+                    if (status == 200) {
+                        // OTP Verified, now reset password!
+                        val res = api.adminUpdateUser(phone, mapOf("password" to newPass))
+                        if (res.status == "success") {
+                            _forgotPassState.value = UiState.Success("PASSWORD_RESET_SUCCESS")
+                        } else {
+                            _forgotPassState.value = UiState.Error("OTP Verified but failed to reset password in DB")
+                        }
+                    } else {
+                        _forgotPassState.value = UiState.Error(jsonResp.optString("message", "Invalid OTP"))
+                    }
+                } else {
+                    _forgotPassState.value = UiState.Error("OTP verification failed")
+                }
+            } catch (e: Exception) {
+                _forgotPassState.value = UiState.Error(e.message ?: "Network error")
+            }
+        }
+    }
 
     fun resetStates() {
         _loginState.value = UiState.Idle
         _registerState.value = UiState.Idle
+        _forgotPassState.value = UiState.Idle
     }
 }
 

@@ -79,6 +79,8 @@ interface ApiService {
     ): ApiResponse<String>
 
     suspend fun getVipBenefits(): ApiResponse<List<VipBenefitModel>>
+    
+    suspend fun checkUserExists(phone: String): ApiResponse<Boolean>
 
     // Administrative Control APIs
     suspend fun adminGetAllUsers(): ApiResponse<List<Map<String, Any>>>
@@ -195,7 +197,7 @@ class MockApiService(private val context: Context) : ApiService {
         }
         prefs.token = "mock_auth_token_xyz_invexx"
         prefs.phone = request.phone
-        prefs.name = "Amit Kumar"
+        prefs.name = "User_" + request.phone.takeLast(4)
         prefs.userId = 7
         
         val user = UserModel(
@@ -482,6 +484,11 @@ class MockApiService(private val context: Context) : ApiService {
         prefs.bankIfscCode = ifsc
         prefs.isBankDetailsSaved = true
         return ApiResponse("success", "Bank details successfully saved to Mock Database", "Success")
+    }
+    
+    override suspend fun checkUserExists(phone: String): ApiResponse<Boolean> {
+        delay(300)
+        return ApiResponse("success", "User check", phone == prefs.phone)
     }
 
     override suspend fun adminGetAllUsers(): ApiResponse<List<Map<String, Any>>> {

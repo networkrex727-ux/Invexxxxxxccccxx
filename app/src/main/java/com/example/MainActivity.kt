@@ -524,6 +524,11 @@ fun MainAppContent() {
             composable("register") {
                 RegisterScreen(navController = navController, viewModel = authViewModel)
             }
+            
+            // Forgot Password
+            composable("forgot_password") {
+                com.example.ui.screens.ForgotPasswordScreen(navController = navController, viewModel = authViewModel)
+            }
 
             // Screen 4: Home (Bottom Tab)
             composable("home") {

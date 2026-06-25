@@ -1314,7 +1314,10 @@ fun FundHistoryScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
                                     Box(
                                         modifier = Modifier
                                             .size(36.dp)
@@ -1330,18 +1333,26 @@ fun FundHistoryScreen(
                                         )
                                     }
                                     Spacer(modifier = Modifier.width(12.dp))
-                                    Column {
-                                        Text(tx.description, style = Typography.labelLarge.copy(fontWeight = FontWeight.Bold))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = tx.description,
+                                            style = Typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                            maxLines = 2,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                        )
                                         Text(tx.date, style = Typography.labelSmall.copy(fontSize = 10.sp))
                                     }
                                 }
+                                
+                                Spacer(modifier = Modifier.width(8.dp))
 
                                 Text(
                                     text = "${if (isPositive) "+" else "-"}₹${"%.2f".format(tx.amount)}",
                                     style = Typography.titleMedium.copy(
                                         fontWeight = FontWeight.ExtraBold,
                                         color = if (isPositive) GreenSuccess else RedError
-                                    )
+                                    ),
+                                    maxLines = 1
                                 )
                             }
                         }

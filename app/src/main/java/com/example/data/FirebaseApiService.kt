@@ -61,13 +61,23 @@ class FirebaseApiService(private val context: Context) : ApiService {
         }
 
         try {
-            // 1. Authenticate with Firebase Auth (mapping phone as virtual email)
-            val authEmail = "${request.phone}@invexx.app"
-            FirebaseAuth.getInstance().signInWithEmailAndPassword(authEmail, request.password).await()
-
-            // 2. Fetch profile from Realtime Database
+            // Fetch profile from Realtime Database first
             val dbRef = FirebaseDatabase.getInstance(firebaseDatabaseUrl).getReference("users")
             val snapshot = dbRef.child(request.phone).awaitValue()
+            var dbPasswordMatched = false
+
+            if (snapshot.exists()) {
+                val dbPassword = snapshot.child("password").getValue(String::class.java)
+                if (dbPassword != null && dbPassword == request.password) {
+                    dbPasswordMatched = true
+                }
+            }
+
+            if (!dbPasswordMatched) {
+                // Fallback to Firebase Auth (mapping phone as virtual email)
+                val authEmail = "${request.phone}@invexx.app"
+                FirebaseAuth.getInstance().signInWithEmailAndPassword(authEmail, request.password).await()
+            }
 
             if (snapshot.exists()) {
                 val name = snapshot.child("name").getValue(String::class.java) ?: "User"
@@ -1552,6 +1562,12 @@ class FirebaseApiService(private val context: Context) : ApiService {
         )
         list.add(0, newNotif) // Prepend at index 0 for newest notifications first
         dbRef.setValue(list).await()
+    }
+
+    override suspend fun checkUserExists(phone: String): ApiResponse<Boolean> {
+        val dbRef = FirebaseDatabase.getInstance(firebaseDatabaseUrl).getReference("users")
+        val snapshot = dbRef.child(phone).awaitValue()
+        return ApiResponse("success", "User check", snapshot.exists())
     }
 
     override suspend fun adminGetAllUsers(): ApiResponse<List<Map<String, Any>>> {

@@ -1145,6 +1145,8 @@ fun MineScreen(
     val vipLevel by viewModel.vipLevel.collectAsState()
 
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showEditNameDialog by remember { mutableStateOf(false) }
+    var newNameInput by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         viewModel.refreshProfile()
@@ -1207,7 +1209,10 @@ fun MineScreen(
                                         tint = PrimaryGold,
                                         modifier = Modifier
                                             .size(16.dp)
-                                            .clickable { viewModel.updateName("Amit Kumar (Verified)") }
+                                            .clickable { 
+                                                newNameInput = name
+                                                showEditNameDialog = true
+                                            }
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(2.dp))
@@ -1314,23 +1319,6 @@ fun MineScreen(
                 )
             }
 
-            // Test Midnight Return Button
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                InvexxButton(
-                    text = "Test: Trigger Midnight Returns",
-                    onClick = { 
-                        viewModel.triggerMidnightEarnings { msg ->
-                            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Default.NightsStay, contentDescription = "Test", tint = DarkCharcoal)
-                    }
-                )
-            }
-
             // Logout Button
             item {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -1345,6 +1333,37 @@ fun MineScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
+    }
+
+    // Edit Name Dialog
+    if (showEditNameDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditNameDialog = false },
+            title = { Text("Edit Profile Name", style = Typography.titleMedium.copy(fontWeight = FontWeight.Bold)) },
+            text = {
+                InvexxTextField(
+                    value = newNameInput,
+                    onValueChange = { newNameInput = it },
+                    hintText = "Enter your name",
+                    leadingIcon = Icons.Default.Person
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (newNameInput.isNotBlank()) {
+                        viewModel.updateName(newNameInput)
+                    }
+                    showEditNameDialog = false
+                }) {
+                    Text("Save", color = PrimaryGold, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditNameDialog = false }) {
+                    Text("Cancel", color = MediumGray)
+                }
+            }
+        )
     }
 
     // Logout confirm Dialog

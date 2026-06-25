@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -221,12 +223,19 @@ fun LoginScreen(
 
     val loginState by viewModel.loginState.collectAsState()
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     LaunchedEffect(loginState) {
         if (loginState is UiState.Success) {
+            android.widget.Toast.makeText(context, "Login Successful!", android.widget.Toast.LENGTH_SHORT).show()
             viewModel.resetStates()
             navController.navigate("home") {
                 popUpTo("login") { inclusive = true }
             }
+        } else if (loginState is UiState.Error) {
+            val err = (loginState as UiState.Error).message
+            android.widget.Toast.makeText(context, err, android.widget.Toast.LENGTH_LONG).show()
+            viewModel.resetStates()
         }
     }
 
@@ -371,7 +380,7 @@ fun LoginScreen(
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp
                         ),
-                        modifier = Modifier.clickable { /* action */ }
+                        modifier = Modifier.clickable { navController.navigate("forgot_password") }
                     )
                 }
 
@@ -479,12 +488,19 @@ fun RegisterScreen(
 
     val registerState by viewModel.registerState.collectAsState()
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     LaunchedEffect(registerState) {
         if (registerState is UiState.Success) {
+            android.widget.Toast.makeText(context, "Registration Successful!", android.widget.Toast.LENGTH_SHORT).show()
             viewModel.resetStates()
             navController.navigate("home") {
                 popUpTo("splash") { inclusive = true }
             }
+        } else if (registerState is UiState.Error) {
+            val err = (registerState as UiState.Error).message
+            android.widget.Toast.makeText(context, err, android.widget.Toast.LENGTH_LONG).show()
+            viewModel.resetStates()
         }
     }
 
@@ -746,6 +762,140 @@ fun RegisterScreen(
                     style = Typography.labelSmall.copy(color = MediumGray, fontWeight = FontWeight.Medium)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun ForgotPasswordScreen(
+    navController: NavController,
+    viewModel: AuthViewModel,
+    modifier: Modifier = Modifier
+) {
+    var phone by remember { mutableStateOf("") }
+    var otp by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var step by remember { mutableStateOf(1) } // 1 = enter phone, 2 = enter otp & pass
+
+    var currentVerificationToken by remember { mutableStateOf("") }
+    var currentDeviceId by remember { mutableStateOf("") }
+
+    val forgotPassState by viewModel.forgotPassState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    LaunchedEffect(forgotPassState) {
+        if (forgotPassState is UiState.Success) {
+            val msg = (forgotPassState as UiState.Success).data
+            if (msg.startsWith("OTP_SENT")) {
+                val parts = msg.split("|")
+                if (parts.size >= 3) {
+                    currentVerificationToken = parts[1]
+                    currentDeviceId = parts[2]
+                }
+                android.widget.Toast.makeText(context, "OTP Sent to $phone", android.widget.Toast.LENGTH_SHORT).show()
+                step = 2
+                viewModel.resetStates()
+            } else if (msg == "PASSWORD_RESET_SUCCESS") {
+                android.widget.Toast.makeText(context, "Password reset successful!", android.widget.Toast.LENGTH_SHORT).show()
+                viewModel.resetStates()
+                navController.popBackStack()
+            }
+        } else if (forgotPassState is UiState.Error) {
+            val err = (forgotPassState as UiState.Error).message
+            android.widget.Toast.makeText(context, err, android.widget.Toast.LENGTH_LONG).show()
+            viewModel.resetStates()
+        }
+    }
+
+    Scaffold(
+        containerColor = SoftBackground,
+        modifier = modifier.fillMaxSize()
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(PureWhite)
+                    .border(1.dp, LightGrayBorder, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Lock, contentDescription = null, tint = PrimaryGold, modifier = Modifier.size(40.dp))
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "Forgot Password",
+                style = Typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = if (step == 1) "Enter your registered phone number to receive an OTP." else "Enter the OTP sent to $phone and your new password.",
+                style = Typography.bodyMedium.copy(color = MediumGray),
+                textAlign = TextAlign.Center
+            )
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            InvexxCard(borderRadius = 16.dp, padding = 20.dp) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    if (step == 1) {
+                        InvexxTextField(
+                            value = phone,
+                            onValueChange = { phone = it },
+                            hintText = "Phone Number",
+                            leadingIcon = Icons.Default.Phone,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                        )
+                        
+                        InvexxButton(
+                            text = "Send OTP",
+                            onClick = { viewModel.sendOtp(phone) },
+                            isLoading = forgotPassState is UiState.Loading
+                        )
+                    } else {
+                        InvexxTextField(
+                            value = otp,
+                            onValueChange = { otp = it },
+                            hintText = "Enter 6-digit OTP",
+                            leadingIcon = Icons.Default.Check,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                        
+                        InvexxTextField(
+                            value = newPassword,
+                            onValueChange = { newPassword = it },
+                            hintText = "New Password",
+                            leadingIcon = Icons.Default.Lock,
+                            visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                        )
+                        
+                        InvexxButton(
+                            text = "Reset Password",
+                            onClick = { 
+                                viewModel.verifyOtpAndResetPass(phone, otp, currentDeviceId, currentVerificationToken, newPassword)
+                            },
+                            isLoading = forgotPassState is UiState.Loading
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "Back to Login",
+                style = Typography.bodyMedium.copy(color = PrimaryGold, fontWeight = FontWeight.Bold),
+                modifier = Modifier.clickable { navController.popBackStack() }
+            )
         }
     }
 }
