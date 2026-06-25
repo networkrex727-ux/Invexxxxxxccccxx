@@ -148,11 +148,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     val status = jsonResp.optInt("status")
                     if (status == 200) {
                         // OTP Verified, now reset password!
-                        val res = api.adminUpdateUser(phone, mapOf("password" to newPass))
+                        val res = api.resetPassword(phone, newPass)
                         if (res.status == "success") {
                             _forgotPassState.value = UiState.Success("PASSWORD_RESET_SUCCESS")
                         } else {
-                            _forgotPassState.value = UiState.Error("OTP Verified but failed to reset password in DB")
+                            _forgotPassState.value = UiState.Error(res.message ?: "Failed to reset password")
                         }
                     } else {
                         _forgotPassState.value = UiState.Error(jsonResp.optString("message", "Invalid OTP"))

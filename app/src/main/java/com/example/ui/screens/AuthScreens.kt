@@ -775,6 +775,7 @@ fun ForgotPasswordScreen(
     var phone by remember { mutableStateOf("") }
     var otp by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
+    var isPasswordVisible by remember { mutableStateOf(false) }
     var step by remember { mutableStateOf(1) } // 1 = enter phone, 2 = enter otp & pass
 
     var currentVerificationToken by remember { mutableStateOf("") }
@@ -875,7 +876,13 @@ fun ForgotPasswordScreen(
                             onValueChange = { newPassword = it },
                             hintText = "New Password",
                             leadingIcon = Icons.Default.Lock,
-                            visualTransformation = PasswordVisualTransformation(),
+                            trailingIcon = {
+                                val icon = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                                IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                    Icon(imageVector = icon, contentDescription = "Toggle password visibility", tint = MediumGray)
+                                }
+                            },
+                            visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
                         )
                         

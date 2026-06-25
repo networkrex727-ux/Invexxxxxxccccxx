@@ -81,6 +81,7 @@ interface ApiService {
     suspend fun getVipBenefits(): ApiResponse<List<VipBenefitModel>>
     
     suspend fun checkUserExists(phone: String): ApiResponse<Boolean>
+    suspend fun resetPassword(phone: String, newPass: String): ApiResponse<String>
 
     // Administrative Control APIs
     suspend fun adminGetAllUsers(): ApiResponse<List<Map<String, Any>>>
@@ -489,6 +490,15 @@ class MockApiService(private val context: Context) : ApiService {
     override suspend fun checkUserExists(phone: String): ApiResponse<Boolean> {
         delay(300)
         return ApiResponse("success", "User check", phone == prefs.phone)
+    }
+
+    override suspend fun resetPassword(phone: String, newPass: String): ApiResponse<String> {
+        delay(300)
+        if (phone == prefs.phone) {
+            prefs.accountPassword = newPass
+            return ApiResponse("success", "Password reset successfully", "Success")
+        }
+        return ApiResponse("error", "User not found", null)
     }
 
     override suspend fun adminGetAllUsers(): ApiResponse<List<Map<String, Any>>> {

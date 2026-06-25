@@ -68,8 +68,13 @@ class FirebaseApiService(private val context: Context) : ApiService {
 
             if (snapshot.exists()) {
                 val dbPassword = snapshot.child("password").getValue(String::class.java)
-                if (dbPassword != null && dbPassword == request.password) {
-                    dbPasswordMatched = true
+                if (dbPassword != null) {
+                    if (dbPassword == request.password) {
+                        dbPasswordMatched = true
+                    } else {
+                        // Password exists in DB but doesn't match
+                        return ApiResponse("error", "Invalid password", null)
+                    }
                 }
             }
 
@@ -1568,6 +1573,39 @@ class FirebaseApiService(private val context: Context) : ApiService {
         val dbRef = FirebaseDatabase.getInstance(firebaseDatabaseUrl).getReference("users")
         val snapshot = dbRef.child(phone).awaitValue()
         return ApiResponse("success", "User check", snapshot.exists())
+    }
+
+    override suspend fun resetPassword(phone: String, newPass: String): ApiResponse<String> {
+        return try {
+            val dbRef = FirebaseDatabase.getInstance(firebaseDatabaseUrl).getReference("users").child(phone)
+            val snapshot = dbRef.awaitValue()
+            if (!snapshot.exists()) {
+                return ApiResponse("error", "User not found", null)
+            }
+            
+            val oldPassword = snapshot.child("password").getValue(String::class.java)
+            if (oldPassword != null) {
+                val authEmail = "${phone}@invexx.app"
+                try {
+                    // Authenticate with old password
+                    FirebaseAuth.getInstance().signInWithEmailAndPassword(authEmail, oldPassword).await()
+                    // Update to new password
+                    FirebaseAuth.getInstance().currentUser?.updatePassword(newPass)?.await()
+                } catch (e: Exception) {
+                    // Ignore auth exceptions, we must update RTDB anyway
+                }
+            }
+            
+            // Update RTDB
+            dbRef.child("password").setValue(newPass).await()
+            if (prefs.phone == phone) {
+                prefs.accountPassword = newPass
+            }
+            
+            ApiResponse("success", "Password reset successfully", "Success")
+        } catch (e: Exception) {
+            ApiResponse("error", "Failed to reset password: ${e.message}", null)
+        }
     }
 
     override suspend fun adminGetAllUsers(): ApiResponse<List<Map<String, Any>>> {
